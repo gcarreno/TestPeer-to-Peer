@@ -17,3 +17,4 @@ Just a simple message exchange protocol in a `P2P` context.
 - Add a property to allow hooking to data received from outside of the peer
 - Hook up event for connection removal from connection thread to peer
 - Understand if a connection needs to be disconnected when being removed
+- Implement command line switch `--connect-to`
