@@ -9,4 +9,4 @@ Just a simple message exchange protocol in a `P2P` context.
 
 In the spirit of full disclosure and due to my utter laziness in coming up with the bulk of the boilerplate code, I turned to `ChatGPT`.
 
-You can see the series pf prompts and answers I've got in the [research](research) folder.
+You can see the series of prompts and answers I've got in the [research](research) folder.

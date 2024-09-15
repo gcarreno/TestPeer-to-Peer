@@ -9,7 +9,9 @@ uses
   {$IFDEF WINDOWS}
   windows,
   {$ENDIF}
-  Classes, SysUtils, CustApp, Peer.Common, Peer
+  Classes, SysUtils, CustApp
+, Peer
+, Peer.Connection
   { you can add units after this };
 
 type
@@ -18,7 +20,7 @@ type
   TPeerApplication = class(TCustomApplication)
   private
     FPeer: TPeer;
-    FHost: string;
+    FAddress: string;
     FPort: string;
   protected
     procedure DoRun; override;
@@ -30,6 +32,8 @@ type
     procedure WriteHelp; virtual;
 
     procedure HandleTerminationSignal;
+    procedure HandleDataAvailable(Sender: TObject; AConnection: TConnection);
+    procedure HandleConnectionClosed(Sender: TObject; AConnection: TConnection);
   end;
 
 
@@ -92,9 +96,9 @@ var
   ErrorMsg: String;
 begin
   // quick check parameters
-  ErrorMsg:=CheckOptions('h', 'help');
+  ErrorMsg:=CheckOptions('hapc', ['help', 'address', 'port', 'connect-to']);
   if ErrorMsg<>'' then begin
-    ShowException(Exception.Create(ErrorMsg));
+    //ShowException(Exception.Create(ErrorMsg));
     Terminate;
     Exit;
   end;
@@ -106,28 +110,43 @@ begin
     Exit;
   end;
 
-  { add your program here }
-
   ParseCommandLineArgs;
 
+  FPeer:= TPeer.Create(FAddress, FPort, 60);
+  try
+    FPeer.OnDataAvailable := @HandleDataAvailable;
+    FPeer.OnConnectionClosed := @HandleConnectionClosed;
 
-  while not Terminated do
-  begin
-    WriteLn('Similating work');
+    // Start the FPeer thread
+    FPeer.Start;
 
-    Sleep(3000);
+    // Optionally, initiate a connection to another FPeer
+    //WriteLn('Initiating connection to 127.0.0.1:54321...');
+    //FPeer.InitiateConnection('127.0.0.1', '54321');
+
+    // Broadcast a message to all connected peers (both accepted and initiated connections)
+    //FPeer.BroadcastMessage('Hello, peers!');
+
+    // List active connections
+    //FPeer.ListConnections;
+
+    // Keep the main program running
+    WriteLn('Peer running... Press Ctrl+C to stop.');
+    FPeer.WaitFor;
+  finally
+    FPeer.Free;
   end;
 
   // stop program loop
-  Terminate;
+  //Terminate;
 end;
 
 procedure TPeerApplication.ParseCommandLineArgs;
 begin
   if HasOption('a', 'address') then
-    FHost := GetOptionValue('a', 'address')
+    FAddress := GetOptionValue('a', 'address')
   else
-    FHost := '127.0.0.1';  // Default host
+    FAddress := '127.0.0.1';  // Default host
 
   if HasOption('p', 'port') then
     FPort := GetOptionValue('p', 'port')
@@ -172,11 +191,33 @@ begin
   WriteLn('Terminating Peer.');
   if Assigned(FPeer) then
   begin
-    //FPeer.Terminate;
-    //FPeer.WaitFor;
+    FPeer.Terminate;
+    FPeer.WaitFor;
   end;
   WriteLn('Terminating Application.');
   Terminate;
+end;
+
+procedure TPeerApplication.HandleDataAvailable(Sender: TObject;
+  AConnection: TConnection);
+var
+  ReceivedData: string;
+begin
+  // Read data directly in the event handler
+  ReceivedData := AConnection.ReadData;
+  if ReceivedData <> '' then
+  begin
+    WriteLn('Received from ', AConnection.Socket.GetRemoteSinIP, ': ', ReceivedData);
+
+    // Optionally, send a response back
+    AConnection.SendMessage('Acknowledged: ' + ReceivedData);
+  end;
+end;
+
+procedure TPeerApplication.HandleConnectionClosed(Sender: TObject;
+  AConnection: TConnection);
+begin
+  WriteLn('Connection closed: ', AConnection.Socket.GetRemoteSinIP);
 end;
 
 begin
