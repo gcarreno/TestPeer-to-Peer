@@ -19,3 +19,4 @@ Just a simple message exchange protocol in a `P2P` context.
 - Hook up event for connection removal from connection thread to peer
 - Understand if a connection needs to be disconnected when being removed
 - Implement command line switch `--connect-to`
+- Ponder having a Ping/Pong immediately before a connection is about to timeout
