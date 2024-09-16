@@ -13,6 +13,7 @@ Just a simple message exchange protocol in a `P2P` context.
 
 ## Todo
 
+- The `TPeer` class, at the moment, does not need to be a thread
 - Hook up event for data received from connection thread to the internal peer method
 - Add a property to allow hooking to data received from outside of the peer
 - Hook up event for connection removal from connection thread to peer
